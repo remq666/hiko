@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Начертательная геометрия — Вариант 16</title>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --bg-card: #1e293b;
+      --bg-card-hover: #334155;
+      --border-color: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      
+      --c-cyl: #111827;
+      --c-ab: #1d4ed8;
+      --c-sigma: #d97706;
+      --c-gen: #059669;
+      --c-k: #dc2626;
+      --c-theta: #7c3aed;
+      --c-norm: #0d9488;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      height: 100dvh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* TOP HEADER */
+    header {
+      height: 52px;
+      background-color: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      shrink: 0;
+      z-index: 20;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .badge-var {
+      background: rgba(37, 99, 235, 0.2);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+    }
+    .brand-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #f8fafc;
+      white-space: nowrap;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* K SELECTOR TOGGLE */
+    .k-toggle {
+      display: flex;
+      background: #0f172a;
+      padding: 2px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+    }
+    .k-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .k-btn.active {
+      background-color: var(--c-k);
+      color: #ffffff;
+    }
+
+    .icon-btn {
+      background: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* MAIN CONTAINER (2 COLUMNS DESKTOP, FLUID MOBILE) */
+    .app-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+    @media (min-width: 900px) {
+      .app-body {
+        flex-direction: row;
+      }
+    }
+
+    /* SVG CANVAS VIEWPORT */
+    .canvas-container {
+      flex: 1;
+      background-color: #ffffff;
+      position: relative;
+      overflow: hidden;
+      touch-action: none;
+      user-select: none;
+    }
+
+    #monge-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+    }
+    #monge-svg:active {
+      cursor: grabbing;
+    }
+
+    /* ZOOM CONTROLS OVERLAY */
+    .zoom-overlay {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      padding: 4px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      z-index: 10;
+    }
+    .zoom-btn {
+      background: transparent;
+      border: none;
+      color: #cbd5e1;
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .zoom-btn:hover {
+      background: var(--border-color);
+      color: #fff;
+    }
+
+    /* FLOATING COORD TOOLTIP */
+    .coord-badge {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(8px);
+      color: #f8fafc;
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      font-family: monospace;
+      font-size: 0.75rem;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* RIGHT SIDEBAR / MOBILE BOTTOM PANEL */
+    .sidebar {
+      width: 100%;
+      height: 44%;
+      background-color: var(--bg-dark);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    @media (min-width: 900px) {
+      .sidebar {
+        width: 380px;
+        height: 100%;
+        border-top: none;
+        border-left: 1px solid var(--border-color);
+      }
+    }
+
+    /* STEP NAVIGATION RIBBON */
+    .step-ribbon {
+      background: var(--bg-card);
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      shrink: 0;
+    }
+    .step-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--bg-dark);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      shrink: 0;
+      transition: all 0.2s;
+    }
+    .step-dot.active {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #3b82f6;
+    }
+
+    /* STEP CONTENT AREA */
+    .step-content {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .step-tag {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #60a5fa;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .step-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #f8fafc;
+      margin-top: 2px;
+    }
+
+    .card-box {
+      background: var(--bg-card);
+      border-radius: 8px;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      font-size: 0.825rem;
+      line-height: 1.5;
+      color: #cbd5e1;
+    }
+    .card-box-amber {
+      background: rgba(120, 53, 15, 0.15);
+      border-color: rgba(217, 119, 6, 0.3);
+      color: #fef3c7;
+    }
+    .card-box-title {
+      font-weight: 700;
+      font-size: 0.775rem;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* BOTTOM NAV BUTTONS */
+    .nav-bar {
+      padding: 12px 16px;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      shrink: 0;
+    }
+    .btn-nav {
+      flex: 1;
+      background: #334155;
+      color: #ffffff;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .btn-nav:hover { background: #475569; }
+    .btn-nav-primary { background: #2563eb; }
+    .btn-nav-primary:hover { background: #1d4ed8; }
+    .btn-nav:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* LAYERS & COORDS MODAL / SHEET */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    @media (min-width: 600px) {
+      .modal-backdrop {
+        align-items: center;
+      }
+    }
+    .modal-backdrop.open { display: flex; }
+
+    .modal-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px 16px 0 0;
+      width: 100%;
+      max-width: 540px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    @media (min-width: 600px) {
+      .modal-panel { border-radius: 12px; }
+    }
+
+    .modal-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-title { font-weight: 700; font-size: 0.95rem; }
+    .btn-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    .modal-body {
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    .layer-list {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .layer-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: #cbd5e1;
+      cursor: pointer;
+    }
+    .layer-item input { accent-color: #2563eb; width: 16px; height: 16px; }
+
+    .coords-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: monospace;
+      font-size: 0.775rem;
+    }
+    .coords-table th, .coords-table td {
+      padding: 6px 10px;
+      border: 1px solid var(--border-color);
+      text-align: left;
+    }
+    .coords-table th { background: var(--bg-dark); color: var(--text-muted); }
+
+    /* SVG TYPOGRAPHY WITH WHITE PAINT-ORDER OUTLINE */
+    text.lbl {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      paint-order: stroke fill;
+      stroke: #ffffff;
+      stroke-width: 3px;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: #1e293b;
+      user-select: none;
+    }
+    text.lbl-ab { fill: var(--c-ab); }
+    text.lbl-sigma { fill: var(--c-sigma); }
+    text.lbl-gen { fill: var(--c-gen); }
+    text.lbl-k { fill: var(--c-k); }
+    text.lbl-theta { fill: var(--c-theta); }
+    text.lbl-norm { fill: var(--c-norm); }
+  </style>
+</head>
+<body>
+
+  <!-- TOP HEADER -->
+  <header>
+    <div class="brand">
+      <span class="badge-var">ВАРИАНТ 16</span>
+      <div class="brand-title">Начертательная геометрия</div>
+    </div>
+    
+    <div class="header-actions">
+      <div class="k-toggle" title="Точка для Задачи 2">
+        <button id="k-btn-1" class="k-btn active" onclick="setKPoint('K1')">K₁</button>
+        <button id="k-btn-2" class="k-btn" onclick="setKPoint('K2')">K₂</button>
+      </div>
+      <button class="icon-btn" onclick="openModal('modal-layers')">⚙️ Слои</button>
+      <button class="icon-btn" onclick="openModal('modal-coords')">📊 XYZ</button>
+    </div>
+  </header>
+
+  <!-- MAIN APP BODY -->
+  <div class="app-body">
+
+    <!-- SVG CANVAS CONTAINER -->
+    <div class="canvas-container" id="canvas-wrap">
+      <div class="zoom-overlay">
+        <button class="zoom-btn" onclick="zoomView(0.8)" title="Увеличить">+</button>
+        <button class="zoom-btn" onclick="zoomView(1.25)" title="Уменьшить">−</button>
+        <button class="zoom-btn" onclick="resetView()" title="Сбросить">⟲</button>
+      </div>
+
+      <div class="coord-badge" id="hover-coord">X: -- | Y: -- | Z: --</div>
+
+      <svg id="monge-svg" viewBox="0 0 640 860" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <pattern id="grid-pattern" width="28.5" height="28.5" patternUnits="userSpaceOnUse">
+            <path d="M 28.5 0 L 0 0 0 28.5" fill="none" stroke="#e2e8f0" stroke-width="0.7"/>
+          </pattern>
+          <marker id="arrow-teal" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#0d9488"/>
+          </marker>
+        </defs>
+
+        <rect id="g-grid" width="640" height="860" fill="url(#grid-pattern)" style="display:none;"/>
+
+        <!-- LAYERS -->
+        <g id="g-axes"></g>
+        <g id="g-proj-lines"></g>
+        <g id="g-cylinder"></g>
+        <g id="g-ab"></g>
+        <g id="g-sigma"></g>
+        <g id="g-gen"></g>
+        <g id="g-k-vis"></g>
+        <g id="g-theta"></g>
+        <g id="g-norm"></g>
+        <g id="g-labels"></g>
+      </svg>
+    </div>
+
+    <!-- SIDEBAR / STEP CONTROL PANEL -->
+    <div class="sidebar">
+      
+      <!-- STEP RIBBON -->
+      <div class="step-ribbon" id="step-ribbon"></div>
+
+      <!-- STEP TEXT CONTENT -->
+      <div class="step-content">
+        <div class="step-header">
+          <div>
+            <div class="step-tag" id="st-tag">Шаг 0 из 8</div>
+            <div class="step-title" id="st-title">--</div>
+          </div>
+        </div>
+
+        <div class="card-box">
+          <div class="card-box-title" style="color: #60a5fa;">📌 Что строим на этом шаге:</div>
+          <div id="st-desc">--</div>
+        </div>
+
+        <div class="card-box card-box-amber">
+          <div class="card-box-title" style="color: #fbbf24;">💡 Почему именно так:</div>
+          <div id="st-reason">--</div>
+        </div>
+      </div>
+
+      <!-- NAV BUTTONS -->
+      <div class="nav-bar">
+        <button class="btn-nav" id="btn-prev" onclick="changeStep(-1)">← Назад</button>
+        <button class="btn-nav btn-nav-primary" id="btn-next" onclick="changeStep(1)">Далее →</button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- LAYERS MODAL -->
+  <div class="modal-backdrop" id="modal-layers">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <div class="modal-title">⚙️ Управление слоями эпюра</div>
+        <button class="btn-close" onclick="closeModal('modal-layers')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="layer-list">
+          <label class="layer-item"><input type="checkbox" id="ly-grid" onchange="syncLayers()"> Миллиметровка</label>
+          <label class="layer-item"><input type="checkbox" id="ly-axes" checked onchange="syncLayers()"> Оси X, Y, Z</label>
+          <label class="layer-item"><input type="checkbox" id="ly-proj" checked onchange="syncLayers()"> Линии связи</label>
+          <label class="layer-item"><input type="checkbox" id="ly-cyl" checked onchange="syncLayers()"> Цилиндр</label>
+          <label class="layer-item"><input type="checkbox" id="ly-ab" checked onchange="syncLayers()"> Прямая AB</label>
+          <label class="layer-item"><input type="checkbox" id="ly-sigma" checked onchange="syncLayers()"> Плоскость Σ (l, M, N)</label>
+          <label class="layer-item"><input type="checkbox" id="ly-gen" checked onchange="syncLayers()"> Образующие g₁, g₂</label>
+          <label class="layer-item"><input type="checkbox" id="ly-theta" checked onchange="syncLayers()"> Плоскость Θ (h, f)</label>
+          <label class="layer-item"><input type="checkbox" id="ly-norm" checked onchange="syncLayers()"> Нормаль n (⦜)</label>
+        </div>
+        <button class="btn-nav" style="width:100%; margin-top:16px;" onclick="resetStepLayers()">Синхронизировать с шагом</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- COORDINATES MODAL -->
+  <div class="modal-backdrop" id="modal-coords">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <div class="modal-title">📊 Точные координаты точек (Вариант 16)</div>
+        <button class="btn-close" onclick="closeModal('modal-coords')">✕</button>
+      </div>
+      <div class="modal-body">
+        <table class="coords-table">
+          <thead>
+            <tr><th>Точка</th><th>X (мм)</th><th>Y (мм)</th><th>Z (мм)</th></tr>
+          </thead>
+          <tbody id="coords-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       1. MONGE GEOMETRY ENGINE (VARIANT 16 EXACT MATH)
+       ========================================================================== */
+    const OX = 565;
+    const OY = 365;
+    const SCALE = 2.85;
+
+    function sx(x) { return OX - x * SCALE; }
+    function sy2(z) { return OY - z * SCALE; }
+    function sy1(y) { return OY + y * SCALE; }
+
+    const R = 35;
+    const C1 = { x: 100, y: 90, z: 0 };
+    const C2 = { x: 45, y: 40, z: 100 };
+    const A = { x: 130, y: 60, z: 65 };
+    const B = { x: 40, y: 140, z: 5 };
+
+    const N = { x: 165.75, y: 92.5, z: 0 };
+    const M = { x: 32.5, y: 146.6667, z: 0 };
+
+    const P1 = { x: 130.742, y: 106.731, z: 0 };
+    const P2 = { x: 89.650, y: 123.435, z: 0 };
+
+    const K1 = { x: 104.384, y: 82.769, z: 47.923 };
+    const K2 = { x: 74.317, y: 109.496, z: 27.878 };
+
+    let currentStep = 0;
+    let selectedK = 'K1';
+
+    function getTask2Data(kKey) {
+      const isK1 = (kKey === 'K1');
+      const K = isK1 ? K1 : K2;
+      const Pb = isK1 ? P1 : P2;
+
+      const dx = Pb.x - C1.x;
+      const dy = Pb.y - C1.y;
+
+      const F_x = Pb.x - (dy / dx) * (K.y - Pb.y);
+      const F = { x: F_x, y: K.y, z: 0 };
+
+      const Nz = 0.55 * dx + 0.50 * dy;
+      const lenN = Math.hypot(dx, dy, Nz);
+      const nScale = 45 / lenN;
+
+      const N_end = {
+        x: K.x + dx * nScale,
+        y: K.y + dy * nScale,
+        z: K.z + Nz * nScale
+      };
+
+      return { K, Pb, dx, dy, F, Nz, N_end };
+    }
+
+    /* ==========================================================================
+       2. SVG RENDER ENGINE
+       ========================================================================== */
+    const layers = {
+      axes: document.getElementById('g-axes'),
+      proj: document.getElementById('g-proj-lines'),
+      cyl: document.getElementById('g-cylinder'),
+      ab: document.getElementById('g-ab'),
+      sigma: document.getElementById('g-sigma'),
+      gen: document.getElementById('g-gen'),
+      kVis: document.getElementById('g-k-vis'),
+      theta: document.getElementById('g-theta'),
+      norm: document.getElementById('g-norm'),
+      labels: document.getElementById('g-labels')
+    };
+
+    function clearAllLayers() {
+      Object.values(layers).forEach(g => g.innerHTML = '');
+    }
+
+    function addLine(layer, x1, y1, x2, y2, stroke='#111827', width=1.5, dash='') {
+      const el = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      el.setAttribute('x1', x1); el.setAttribute('y1', y1);
+      el.setAttribute('x2', x2); el.setAttribute('y2', y2);
+      el.setAttribute('stroke', stroke);
+      el.setAttribute('stroke-width', width);
+      if (dash) el.setAttribute('stroke-dasharray', dash);
+      el.setAttribute('stroke-linecap', 'round');
+      layer.appendChild(el);
+    }
+
+    function addPoint(layer, x, y, label='', color='#111827', pos='top', r=3.5) {
+      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      circle.setAttribute('cx', x); circle.setAttribute('cy', y); circle.setAttribute('r', r);
+      circle.setAttribute('fill', color);
+      circle.setAttribute('stroke', '#ffffff');
+      circle.setAttribute('stroke-width', '1.5');
+      layer.appendChild(circle);
+
+      if (label) {
+        let dx = 0, dy = -8, anchor = 'middle';
+        if (pos === 'bottom') dy = 16;
+        if (pos === 'left') { dx = -10; dy = 4; anchor = 'end'; }
+        if (pos === 'right') { dx = 10; dy = 4; anchor = 'start'; }
+        if (pos === 'top-right') { dx = 8; dy = -6; anchor = 'start'; }
+        if (pos === 'bottom-left') { dx = -8; dy = 14; anchor = 'end'; }
+
+        let cls = 'lbl';
+        if (color === '#1d4ed8') cls += ' lbl-ab';
+        if (color === '#d97706') cls += ' lbl-sigma';
+        if (color === '#059669') cls += ' lbl-gen';
+        if (color === '#dc2626') cls += ' lbl-k';
+        if (color === '#7c3aed') cls += ' lbl-theta';
+        if (color === '#0d9488') cls += ' lbl-norm';
+
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', x + dx); txt.setAttribute('y', y + dy);
+        txt.setAttribute('class', cls);
+        txt.setAttribute('text-anchor', anchor);
+        txt.textContent = label;
+        layers.labels.appendChild(txt);
+      }
+    }
+
+    function addProjLine(pt, label='') {
+      const u = sx(pt.x);
+      const v2 = sy2(pt.z);
+      const v1 = sy1(pt.y);
+      addLine(layers.proj, u, v2, u, v1, '#cbd5e1', 1, '3,3');
+      if (label) {
+        addPoint(layers.labels, u, v2, `${label}''`, '#94a3b8', 'top');
+        addPoint(layers.labels, u, v1, `${label}'`, '#94a3b8', 'bottom');
+      }
+    }
+
+    function addRightAngle(layer, vx, vy, ax, ay, bx, by, size=8, color='#0d9488') {
+      const vAx = ax - vx, vAy = ay - vy;
+      const vBx = bx - vx, vBy = by - vy;
+      const lenA = Math.hypot(vAx, vAy), lenB = Math.hypot(vBx, vBy);
+      if (!lenA || !lenB) return;
+
+      const uAx = (vAx / lenA) * size, uAy = (vAy / lenA) * size;
+      const uBx = (vBx / lenB) * size, uBy = (vBy / lenB) * size;
+
+      const p1x = vx + uAx, p1y = vy + uAy;
+      const pCx = vx + uAx + uBx, pCy = vy + uAy + uBy;
+      const p2x = vx + uBx, p2y = vy + uBy;
+
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', `M ${p1x} ${p1y} L ${pCx} ${pCy} L ${p2x} ${p2y}`);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', color);
+      path.setAttribute('stroke-width', '1.5');
+      layer.appendChild(path);
+    }
+
+    function renderDiagram() {
+      clearAllLayers();
+
+      // --- AXES LAYER ---
+      addLine(layers.axes, 40, OY, 600, OY, '#475569', 1.8);
+      addLine(layers.axes, sx(0), OY, sx(0), sy2(115), '#94a3b8', 1, '4,3');
+      addLine(layers.axes, sx(0), OY, sx(0), sy1(175), '#94a3b8', 1, '4,3');
+
+      addPoint(layers.labels, 50, OY - 8, 'x', '#475569');
+      addPoint(layers.labels, sx(0) + 12, OY - 8, 'O(0,0)', '#475569');
+      addPoint(layers.labels, sx(0) + 8, sy2(110), 'z (П₂)', '#64748b');
+      addPoint(layers.labels, sx(0) + 8, sy1(170), 'y (П₁)', '#64748b');
+
+      // --- CYLINDER LAYER ---
+      // P2 Frontal
+      addLine(layers.cyl, sx(135), sy2(0), sx(65), sy2(0), '#111827', 2.5);
+      addLine(layers.cyl, sx(80), sy2(100), sx(10), sy2(100), '#111827', 2.5);
+      addLine(layers.cyl, sx(135), sy2(0), sx(80), sy2(100), '#111827', 2.5);
+      addLine(layers.cyl, sx(65), sy2(0), sx(10), sy2(100), '#111827', 2.5);
+      addLine(layers.cyl, sx(C1.x), sy2(0), sx(C2.x), sy2(100), '#64748b', 1.2, '10,3,2,3');
+
+      addPoint(layers.labels, sx(C1.x), sy2(0), "C₁''", '#64748b', 'bottom');
+      addPoint(layers.labels, sx(C2.x), sy2(100), "C₂''", '#64748b', 'top');
+
+      // P1 Horizontal
+      const circleTop = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      circleTop.setAttribute('cx', sx(C2.x)); circleTop.setAttribute('cy', sy1(C2.y));
+      circleTop.setAttribute('r', R * SCALE); circleTop.setAttribute('fill', 'none');
+      circleTop.setAttribute('stroke', '#111827'); circleTop.setAttribute('stroke-width', '2.5');
+      layers.cyl.appendChild(circleTop);
+
+      // Tangents and split arcs for bottom base
+      const lenV = Math.hypot(-55, -50);
+      const perpV = { x: 50 / lenV, y: -55 / lenV };
+      const T1a = { x: C1.x + R * perpV.x, y: C1.y + R * perpV.y };
+      const T1b = { x: C1.x - R * perpV.x, y: C1.y - R * perpV.y };
+      const T2a = { x: C2.x + R * perpV.x, y: C2.y + R * perpV.y };
+      const T2b = { x: C2.x - R * perpV.x, y: C2.y - R * perpV.y };
+
+      addLine(layers.cyl, sx(T1a.x), sy1(T1a.y), sx(T2a.x), sy1(T2a.y), '#111827', 2.5);
+      addLine(layers.cyl, sx(T1b.x), sy1(T1b.y), sx(T2b.x), sy1(T2b.y), '#111827', 2.5);
+      addLine(layers.cyl, sx(C1.x), sy1(C1.y), sx(C2.x), sy1(C2.y), '#64748b', 1.2, '10,3,2,3');
+
+      // Base arc sampling
+      const angleA = Math.atan2(T1a.y - C1.y, T1a.x - C1.x);
+      const angleB = Math.atan2(T1b.y - C1.y, T1b.x - C1.x);
+
+      let arcSolid = "M ", arcDashed = "M ";
+      for (let i = 0; i <= 32; i++) {
+        const a1 = angleA + (i / 32) * (angleB - angleA);
+        arcSolid += `${sx(C1.x + R * Math.cos(a1))},${sy1(C1.y + R * Math.sin(a1))} `;
+
+        const a2 = angleB + (i / 32) * (angleA + 2 * Math.PI - angleB);
+        arcDashed += `${sx(C1.x + R * Math.cos(a2))},${sy1(C1.y + R * Math.sin(a2))} `;
+      }
+
+      const pathSolid = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pathSolid.setAttribute('d', arcSolid); pathSolid.setAttribute('fill', 'none');
+      pathSolid.setAttribute('stroke', '#111827'); pathSolid.setAttribute('stroke-width', '2.5');
+      layers.cyl.appendChild(pathSolid);
+
+      const pathDashed = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pathDashed.setAttribute('d', arcDashed); pathDashed.setAttribute('fill', 'none');
+      pathDashed.setAttribute('stroke', '#111827'); pathDashed.setAttribute('stroke-width', '1.8');
+      pathDashed.setAttribute('stroke-dasharray', '5,4');
+      layers.cyl.appendChild(pathDashed);
+
+      addPoint(layers.labels, sx(C1.x), sy1(C1.y), "C₁'", '#64748b', 'right');
+      addPoint(layers.labels, sx(C2.x), sy1(C2.y), "C₂'", '#64748b', 'left');
+
+      // --- LINE AB LAYER ---
+      addLine(layers.ab, sx(A.x), sy2(A.z), sx(B.x), sy2(B.z), '#1d4ed8', 2);
+      addLine(layers.ab, sx(A.x), sy1(A.y), sx(B.x), sy1(B.y), '#1d4ed8', 2);
+
+      addPoint(layers.labels, sx(A.x), sy2(A.z), "A''", '#1d4ed8', 'top');
+      addPoint(layers.labels, sx(B.x), sy2(B.z), "B''", '#1d4ed8', 'bottom');
+      addPoint(layers.labels, sx(A.x), sy1(A.y), "A'", '#1d4ed8', 'top-right');
+      addPoint(layers.labels, sx(B.x), sy1(B.y), "B'", '#1d4ed8', 'bottom-left');
+
+      addProjLine(A);
+      addProjLine(B);
+
+      // --- STEP 1+: LINE l AND TRACE N ---
+      if (currentStep >= 1) {
+        addLine(layers.sigma, sx(A.x), sy2(A.z), sx(N.x), sy2(N.z), '#d97706', 1.8, '6,3');
+        addLine(layers.sigma, sx(A.x), sy1(A.y), sx(N.x), sy1(N.y), '#d97706', 1.8, '6,3');
+
+        addPoint(layers.labels, sx(N.x), sy2(N.z), "N''", '#d97706', 'top');
+        addPoint(layers.labels, sx(N.x), sy1(N.y), "N'", '#d97706', 'bottom');
+        addProjLine(N);
+      }
+
+      // --- STEP 2+: TRACE M AND PLANE SIGMA_1 ---
+      if (currentStep >= 2) {
+        addLine(layers.sigma, sx(B.x), sy2(B.z), sx(M.x), sy2(M.z), '#d97706', 1, '4,3');
+        addLine(layers.sigma, sx(B.x), sy1(B.y), sx(M.x), sy1(M.y), '#d97706', 1, '4,3');
+
+        const dxMN = M.x - N.x, dyMN = M.y - N.y;
+        const h0_x1 = N.x - 20, h0_y1 = N.y - 20 * (dyMN / dxMN);
+        const h0_x2 = M.x + 30, h0_y2 = M.y + 30 * (dyMN / dxMN);
+
+        addLine(layers.sigma, sx(h0_x1), sy1(h0_y1), sx(h0_x2), sy1(h0_y2), '#d97706', 2.5);
+
+        addPoint(layers.labels, sx(M.x), sy2(M.z), "M''", '#d97706', 'top');
+        addPoint(layers.labels, sx(M.x), sy1(M.y), "M'", '#d97706', 'bottom-left');
+        addProjLine(M);
+      }
+
+      // --- STEP 3+: BASE POINTS 1, 2 AND GENERATORS g1, g2 ---
+      if (currentStep >= 3) {
+        const g1_top = { x: P1.x - 55, y: P1.y - 50, z: 100 };
+        const g2_top = { x: P2.x - 55, y: P2.y - 50, z: 100 };
+
+        addLine(layers.gen, sx(P1.x), sy2(0), sx(g1_top.x), sy2(100), '#059669', 1.8);
+        addLine(layers.gen, sx(P1.x), sy1(P1.y), sx(g1_top.x), sy1(g1_top.y), '#059669', 1.8);
+        addLine(layers.gen, sx(P2.x), sy2(0), sx(g2_top.x), sy2(100), '#059669', 1.8);
+        addLine(layers.gen, sx(P2.x), sy1(P2.y), sx(g2_top.x), sy1(g2_top.y), '#059669', 1.8);
+
+        addPoint(layers.labels, sx(P1.x), sy1(P1.y), "1'", '#059669', 'bottom-left');
+        addPoint(layers.labels, sx(P2.x), sy1(P2.y), "2'", '#059669', 'bottom-left');
+        addPoint(layers.labels, sx(P1.x), sy2(0), "1''", '#059669', 'top');
+        addPoint(layers.labels, sx(P2.x), sy2(0), "2''", '#059669', 'top');
+
+        addProjLine(P1);
+        addProjLine(P2);
+      }
+
+      // --- STEP 4+: INTERSECTION POINTS K1, K2 ---
+      if (currentStep >= 4) {
+        addPoint(layers.labels, sx(K1.x), sy2(K1.z), "K₁''", '#dc2626', 'top', 4);
+        addPoint(layers.labels, sx(K1.x), sy1(K1.y), "K₁'", '#dc2626', 'bottom', 4);
+        addPoint(layers.labels, sx(K2.x), sy2(K2.z), "K₂''", '#dc2626', 'top', 4);
+        addPoint(layers.labels, sx(K2.x), sy1(K2.y), "K₂'", '#dc2626', 'bottom', 4);
+
+        addProjLine(K1);
+        addProjLine(K2);
+      }
+
+      // --- STEP 5+: VISIBILITY SEGMENTS FOR LINE AB ---
+      if (currentStep >= 5) {
+        // P2
+        addLine(layers.kVis, sx(A.x), sy2(A.z), sx(K1.x), sy2(K1.z), '#1d4ed8', 3);
+        addLine(layers.kVis, sx(K1.x), sy2(K1.z), sx(K2.x), sy2(K2.z), '#dc2626', 2, '5,4');
+        addLine(layers.kVis, sx(K2.x), sy2(K2.z), sx(B.x), sy2(B.z), '#1d4ed8', 3);
+
+        // P1
+        addLine(layers.kVis, sx(A.x), sy1(A.y), sx(K1.x), sy1(K1.y), '#1d4ed8', 3);
+        addLine(layers.kVis, sx(K1.x), sy1(K1.y), sx(K2.x), sy1(K2.y), '#dc2626', 2, '5,4');
+        addLine(layers.kVis, sx(K2.x), sy1(K2.y), sx(B.x), sy1(B.y), '#1d4ed8', 3);
+      }
+
+      // --- STEP 6+: TANGENT PLANE THETA - TRACE THETA_1 & HORIZONTAL h ---
+      if (currentStep >= 6) {
+        const t2 = getTask2Data(selectedK);
+        const { K, Pb, dx, dy } = t2;
+
+        // Radius C1' -> Pb'
+        addLine(layers.theta, sx(C1.x), sy1(C1.y), sx(Pb.x), sy1(Pb.y), '#7c3aed', 1.5, '4,3');
+
+        // Trace Theta_1
+        const dirH0 = { x: -dy, y: dx };
+        const lenH0 = Math.hypot(dirH0.x, dirH0.y);
+        const h0_p1x = Pb.x + (dirH0.x / lenH0) * 45;
+        const h0_p1y = Pb.y + (dirH0.y / lenH0) * 45;
+        const h0_p2x = Pb.x - (dirH0.x / lenH0) * 45;
+        const h0_p2y = Pb.y - (dirH0.y / lenH0) * 45;
+
+        addLine(layers.theta, sx(h0_p1x), sy1(h0_p1y), sx(h0_p2x), sy1(h0_p2y), '#7c3aed', 2.5);
+
+        // Horizontal h
+        addLine(layers.theta, sx(K.x + 30), sy2(K.z), sx(K.x - 30), sy2(K.z), '#7c3aed', 2);
+        const h1_p1x = K.x + (dirH0.x / lenH0) * 35;
+        const h1_p1y = K.y + (dirH0.y / lenH0) * 35;
+        const h1_p2x = K.x - (dirH0.x / lenH0) * 35;
+        const h1_p2y = K.y - (dirH0.y / lenH0) * 35;
+        addLine(layers.theta, sx(h1_p1x), sy1(h1_p1y), sx(h1_p2x), sy1(h1_p2y), '#7c3aed', 2);
+
+        // Right angle perp symbol at Pb'
+        addRightAngle(layers.labels, sx(Pb.x), sy1(Pb.y), sx(C1.x), sy1(C1.y), sx(h0_p1x), sy1(h0_p1y), 8, '#7c3aed');
+      }
+
+      // --- STEP 7+: FRONTAL f ---
+      if (currentStep >= 7) {
+        const t2 = getTask2Data(selectedK);
+        const { K, F } = t2;
+
+        // Frontal f'
+        addLine(layers.theta, sx(K.x - 20), sy1(K.y), sx(F.x + 20), sy1(F.y), '#7c3aed', 2);
+
+        // Frontal f''
+        const vecF2x = sx(K.x) - sx(F.x);
+        const vecF2y = sy2(K.z) - sy2(0);
+        addLine(layers.theta, sx(F.x) - vecF2x * 0.2, sy2(0) - vecF2y * 0.2, sx(K.x) + vecF2x * 0.4, sy2(K.z) + vecF2y * 0.4, '#7c3aed', 2);
+
+        addPoint(layers.labels, sx(F.x), sy1(F.y), "F'", '#7c3aed', 'bottom-left');
+        addPoint(layers.labels, sx(F.x), sy2(0), "F''", '#7c3aed', 'top');
+
+        addProjLine(F);
+      }
+
+      // --- STEP 8: NORMAL n ---
+      if (currentStep >= 8) {
+        const t2 = getTask2Data(selectedK);
+        const { K, N_end, dx, dy, F } = t2;
+
+        const u2_K = sx(K.x), v2_K = sy2(K.z);
+        const u1_K = sx(K.x), v1_K = sy1(K.y);
+        const u2_N = sx(N_end.x), v2_N = sy2(N_end.z);
+        const u1_N = sx(N_end.x), v1_N = sy1(N_end.y);
+
+        // Normal n'' P2
+        addLine(layers.norm, u2_K, v2_K, u2_N, v2_N, '#0d9488', 2.8);
+        const arrow2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        arrow2.setAttribute('x1', u2_K); arrow2.setAttribute('y1', v2_K);
+        arrow2.setAttribute('x2', u2_N); arrow2.setAttribute('y2', v2_N);
+        arrow2.setAttribute('stroke', '#0d9488'); arrow2.setAttribute('stroke-width', '2.8');
+        arrow2.setAttribute('marker-end', 'url(#arrow-teal)');
+        layers.norm.appendChild(arrow2);
+
+        // Normal n' P1
+        addLine(layers.norm, u1_K, v1_K, u1_N, v1_N, '#0d9488', 2.8);
+        const arrow1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        arrow1.setAttribute('x1', u1_K); arrow1.setAttribute('y1', v1_K);
+        arrow1.setAttribute('x2', u1_N); arrow1.setAttribute('y2', v1_N);
+        arrow1.setAttribute('stroke', '#0d9488'); arrow1.setAttribute('stroke-width', '2.8');
+        arrow1.setAttribute('marker-end', 'url(#arrow-teal)');
+        layers.norm.appendChild(arrow1);
+
+        addPoint(layers.labels, u2_N, v2_N, "n''", '#0d9488', 'top');
+        addPoint(layers.labels, u1_N, v1_N, "n'", '#0d9488', 'bottom');
+
+        addProjLine(N_end);
+
+        // Right angle symbols n' ⊥ h' and n'' ⊥ f''
+        const dirH0 = { x: -dy, y: dx };
+        const lenH0 = Math.hypot(dirH0.x, dirH0.y);
+        const ptH1x = sx(K.x + (dirH0.x / lenH0) * 25);
+        const ptH1y = sy1(K.y + (dirH0.y / lenH0) * 25);
+        addRightAngle(layers.labels, u1_K, v1_K, ptH1x, ptH1y, u1_N, v1_N, 8, '#0d9488');
+
+        const u2_F0 = sx(F.x), v2_F0 = sy2(0);
+        addRightAngle(layers.labels, u2_K, v2_K, u2_F0, v2_F0, u2_N, v2_N, 8, '#0d9488');
+      }
+
+      syncLayers();
+    }
+
+    /* ==========================================================================
+       3. STEP DATA & CONTROLLER
+       ========================================================================== */
+    const steps = [
+      {
+        title: "Исходные данные (Цилиндр и прямая AB)",
+        desc: "Строим проекции наклонного кругового цилиндра и прямой AB по заданным координатам Варианта 16.",
+        reason: "П₂ задает высоты (Z), а П₁ показывает план (X, Y). Для нижнего основания очерк делится на видимую и невидимую дуги."
+      },
+      {
+        title: "Вспомогательная прямая l ∥ оси и её след N",
+        desc: "Через точку A проводим прямую l || оси цилиндра C₁C₂ и находим её след N(165.75, 92.5, 0) на П₁.",
+        reason: "Любая плоскость, параллельная образующим цилиндра, пересекает плоскость основания по прямой, параллельной представительнице l."
+      },
+      {
+        title: "След M прямой AB и след плоскости Σ₁",
+        desc: "Находим след M(32.5, 146.67, 0) прямой AB на П₁. Проводим след Σ₁ через M' и N' (50x + 123y = 19665).",
+        reason: "Плоскость Σ = (AB ∩ l) содержит прямую AB и проходит через образующие сечения цилиндра."
+      },
+      {
+        title: "Точки 1, 2 на основании и образующие g₁, g₂",
+        desc: "След Σ₁ пересекает окружность основания в точках 1(130.74, 106.73, 0) и 2(89.65, 123.44, 0). Проводим образующие g₁ и g₂.",
+        reason: "Точки 1 и 2 — это точки входа и выхода секущей плоскости Σ в основание цилиндра."
+      },
+      {
+        title: "Точки пересечения K₁ и K₂ прямой AB с цилиндром",
+        desc: "Пересечение образующих g₁ и g₂ с прямой AB определяет точки K₁(104.38, 82.77, 47.92) и K₂(74.32, 109.50, 27.88).",
+        reason: "Так как g₁ и g₂ принадлежат цилиндру и плоскости Σ, их пересечение с AB даёт точные точки входа и выхода."
+      },
+      {
+        title: "Определение видимости прямой AB",
+        desc: "Участок K₁K₂ находится внутри цилиндра (невидим), а участки AK₁ и K₂B — снаружи (видимы).",
+        reason: "Цилиндр непрозрачен, поэтому отрезок прямой между точками входа и выхода скрыт его телом."
+      },
+      {
+        title: "Касательная плоскость Θ: след Θ₁ и горизонталь h",
+        desc: "Проводим след Θ₁ ⊥ радиусу основания в базе точки касания, и горизонталь h (h'' || x, h' || Θ₁).",
+        reason: "Касательная плоскость к цилиндру касательна по образующей. В основании след Θ₁ перпендикулярен радиусу."
+      },
+      {
+        title: "Фронталь f касательной плоскости Θ",
+        desc: "Проводим f' || x через K' до следа Θ₁ в точке F', проецируем в F'' на ось x и проводим f'' через K''.",
+        reason: "Фронталь f — главная линия плоскости. Её проекция f' параллельна оси x, что определяет фронтальный след F."
+      },
+      {
+        title: "Нормаль n к поверхности (n' ⊥ h', n'' ⊥ f'')",
+        desc: "Проводим нормаль n: на П₁ проекция n' ⊥ h', а на П₂ проекция n'' ⊥ f''. Наносим знаки прямого угла ⦜.",
+        reason: "Перпендикуляр к плоскости проецируется перпендикулярно к ее горизонтали на П₁ и к фронтали на П₂."
+      }
+    ];
+
+    function updateStepUI() {
+      const data = steps[currentStep];
+      document.getElementById('st-tag').innerText = `Шаг ${currentStep} из 8`;
+      document.getElementById('st-title').innerText = data.title;
+      document.getElementById('st-desc').innerText = data.desc;
+      document.getElementById('st-reason').innerText = data.reason;
+
+      document.getElementById('btn-prev').disabled = (currentStep === 0);
+      document.getElementById('btn-next').disabled = (currentStep === 8);
+
+      const ribbon = document.getElementById('step-ribbon');
+      ribbon.innerHTML = '';
+      for (let i = 0; i <= 8; i++) {
+        const dot = document.createElement('button');
+        dot.className = `step-dot ${i === currentStep ? 'active' : ''}`;
+        dot.innerText = i;
+        dot.onclick = () => { currentStep = i; updateStepUI(); };
+        ribbon.appendChild(dot);
+      }
+
+      renderDiagram();
+    }
+
+    function changeStep(delta) {
+      const newStep = currentStep + delta;
+      if (newStep >= 0 && newStep <= 8) {
+        currentStep = newStep;
+        updateStepUI();
+      }
+    }
+
+    function setKPoint(kKey) {
+      selectedK = kKey;
+      document.getElementById('k-btn-1').className = `k-btn ${kKey === 'K1' ? 'active' : ''}`;
+      document.getElementById('k-btn-2').className = `k-btn ${kKey === 'K2' ? 'active' : ''}`;
+      renderDiagram();
+    }
+
+    /* ==========================================================================
+       4. LAYER MANAGEMENT & COORDINATES TABLE
+       ========================================================================== */
+    function syncLayers() {
+      document.getElementById('g-grid').style.display = document.getElementById('ly-grid').checked ? 'block' : 'none';
+      layers.axes.style.display = document.getElementById('ly-axes').checked ? 'block' : 'none';
+      layers.proj.style.display = document.getElementById('ly-proj').checked ? 'block' : 'none';
+      layers.cyl.style.display = document.getElementById('ly-cyl').checked ? 'block' : 'none';
+      layers.ab.style.display = document.getElementById('ly-ab').checked ? 'block' : 'none';
+      layers.sigma.style.display = document.getElementById('ly-sigma').checked ? 'block' : 'none';
+      layers.gen.style.display = document.getElementById('ly-gen').checked ? 'block' : 'none';
+      layers.kVis.style.display = document.getElementById('ly-ab').checked ? 'block' : 'none';
+      layers.theta.style.display = document.getElementById('ly-theta').checked ? 'block' : 'none';
+      layers.norm.style.display = document.getElementById('ly-norm').checked ? 'block' : 'none';
+    }
+
+    function resetStepLayers() {
+      document.getElementById('ly-grid').checked = false;
+      document.getElementById('ly-axes').checked = true;
+      document.getElementById('ly-proj').checked = true;
+      document.getElementById('ly-cyl').checked = true;
+      document.getElementById('ly-ab').checked = true;
+      document.getElementById('ly-sigma').checked = (currentStep >= 1);
+      document.getElementById('ly-gen').checked = (currentStep >= 3);
+      document.getElementById('ly-theta').checked = (currentStep >= 6);
+      document.getElementById('ly-norm').checked = (currentStep >= 8);
+      syncLayers();
+      closeModal('modal-layers');
+    }
+
+    function populateCoordsTable() {
+      const tbody = document.getElementById('coords-tbody');
+      const pts = [
+        { name: "C₁ (Основание)", x: C1.x, y: C1.y, z: C1.z },
+        { name: "C₂ (Основание)", x: C2.x, y: C2.y, z: C2.z },
+        { name: "A", x: A.x, y: A.y, z: A.z },
+        { name: "B", x: B.x, y: B.y, z: B.z },
+        { name: "N (След l)", x: N.x, y: N.y, z: N.z },
+        { name: "M (След AB)", x: M.x, y: M.y, z: M.z },
+        { name: "1 (Основание)", x: P1.x, y: P1.y, z: P1.z },
+        { name: "2 (Основание)", x: P2.x, y: P2.y, z: P2.z },
+        { name: "K₁ (Вход)", x: K1.x, y: K1.y, z: K1.z },
+        { name: "K₂ (Выход)", x: K2.x, y: K2.y, z: K2.z }
+      ];
+
+      tbody.innerHTML = pts.map(p => `
+        <tr>
+          <td><b>${p.name}</b></td>
+          <td>${p.x.toFixed(1)}</td>
+          <td>${p.y.toFixed(1)}</td>
+          <td>${p.z.toFixed(1)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function openModal(id) {
+      if (id === 'modal-coords') populateCoordsTable();
+      document.getElementById(id).classList.add('open');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+
+    /* ==========================================================================
+       5. PAN & ZOOM CONTROLLER FOR SVG
+       ========================================================================== */
+    const svgEl = document.getElementById('monge-svg');
+    let viewBox = { x: 0, y: 0, w: 640, h: 860 };
+
+    function setViewBox() {
+      svgEl.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`);
+    }
+
+    function zoomView(scaleFactor) {
+      const cx = viewBox.x + viewBox.w / 2;
+      const cy = viewBox.y + viewBox.h / 2;
+      viewBox.w *= scaleFactor;
+      viewBox.h *= scaleFactor;
+      viewBox.x = cx - viewBox.w / 2;
+      viewBox.y = cy - viewBox.h / 2;
+      setViewBox();
+    }
+
+    function resetView() {
+      viewBox = { x: 0, y: 0, w: 640, h: 860 };
+      setViewBox();
+    }
+
+    let isPan = false, panStart = { x: 0, y: 0 };
+    svgEl.addEventListener('pointerdown', (e) => {
+      isPan = true;
+      panStart = { x: e.clientX, y: e.clientY };
+      svgEl.setPointerCapture(e.pointerId);
+    });
+
+    svgEl.addEventListener('pointermove', (e) => {
+      if (!isPan) return;
+      const dx = (e.clientX - panStart.x) * (viewBox.w / svgEl.clientWidth);
+      const dy = (e.clientY - panStart.y) * (viewBox.h / svgEl.clientHeight);
+      viewBox.x -= dx;
+      viewBox.y -= dy;
+      panStart = { x: e.clientX, y: e.clientY };
+      setViewBox();
+
+      // Hover coordinate display
+      const rect = svgEl.getBoundingClientRect();
+      const svgX = viewBox.x + (e.clientX - rect.left) * (viewBox.w / rect.width);
+      const svgY = viewBox.y + (e.clientY - rect.top) * (viewBox.h / rect.height);
+      const realX = (OX - svgX) / SCALE;
+      const realY = (svgY > OY) ? (svgY - OY) / SCALE : 0;
+      const realZ = (svgY <= OY) ? (OY - svgY) / SCALE : 0;
+
+      document.getElementById('hover-coord').innerText = `X: ${realX.toFixed(1)} | Y: ${realY.toFixed(1)} | Z: ${realZ.toFixed(1)}`;
+    });
+
+    svgEl.addEventListener('pointerup', (e) => {
+      isPan = false;
+      try { svgEl.releasePointerCapture(e.pointerId); } catch(err){}
+    });
+
+    // Keyboard support
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') changeStep(1);
+      if (e.key === 'ArrowLeft') changeStep(-1);
+    });
+
+    // INIT
+    window.onload = () => {
+      updateStepUI();
+    };
+  </script>
+</body>
+</html>
